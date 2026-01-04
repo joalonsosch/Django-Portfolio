@@ -20,6 +20,7 @@ from portfolios.services import (
     portfolio_create,
     price_create,
     portfolio_weight_create,
+    portfolio_initial_quantities_calculate,
 )
 
 
@@ -112,6 +113,9 @@ class Command(BaseCommand):
             
             # Load prices
             self._load_prices(precios_sheet, assets)
+            
+            # Calculate initial quantities
+            self._calculate_initial_quantities(portfolios)
             
             self.stdout.write(self.style.SUCCESS('\nData loading completed successfully!'))
             self._print_summary()
@@ -402,8 +406,37 @@ class Command(BaseCommand):
         
         self.stdout.write(self.style.SUCCESS(f'Loaded {prices_loaded} prices'))
 
+    def _calculate_initial_quantities(self, portfolios: dict[str, Portfolio]):
+        """Calculate and store initial quantities for all portfolios.
+        
+        Args:
+            portfolios: Dictionary mapping portfolio names to Portfolio instances
+        """
+        self.stdout.write('\nCalculating initial quantities...')
+        total_holdings = 0
+        
+        for portfolio_name, portfolio in portfolios.items():
+            try:
+                holdings = portfolio_initial_quantities_calculate(portfolio=portfolio)
+                holdings_count = len(holdings)
+                total_holdings += holdings_count
+                self.stdout.write(
+                    f'  Calculated {holdings_count} quantities for {portfolio_name}'
+                )
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(
+                        f'  Error calculating quantities for {portfolio_name}: {str(e)}'
+                    )
+                )
+                continue
+        
+        self.stdout.write(self.style.SUCCESS(f'Calculated {total_holdings} total holdings'))
+
     def _print_summary(self):
         """Print summary of loaded data."""
+        from portfolios.models import PortfolioHolding
+        
         self.stdout.write('\n' + '=' * 50)
         self.stdout.write('Data Summary:')
         self.stdout.write('=' * 50)
@@ -411,5 +444,6 @@ class Command(BaseCommand):
         self.stdout.write(f'Portfolios: {Portfolio.objects.count()}')
         self.stdout.write(f'Weights: {PortfolioWeight.objects.count()}')
         self.stdout.write(f'Prices: {Price.objects.count()}')
+        self.stdout.write(f'Holdings: {PortfolioHolding.objects.count()}')
         self.stdout.write('=' * 50)
 
