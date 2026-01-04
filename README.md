@@ -32,10 +32,10 @@ This system models investment portfolios composed of multiple assets, tracking:
 ## Documentation
 
 Project documentation is available in the `docs/` folder:
-- `PROJECT_ROADMAP.md` - Complete development roadmap
-- `Enunciado_Definitive.md` - Project requirements and specifications
-- `Django_Styleguide_Definitive.md` - Django coding styleguide
-- `Branches&Commits_Definitive.md` - Git workflow conventions
+- `project-roadmap.md` - Complete development roadmap
+- `enunciado.md` - Project requirements and specifications
+- `django-styleguide.md` - Django coding styleguide
+- `branches-and-commits-styleguide.md` - Git workflow conventions
 
 ## Setup Instructions
 
