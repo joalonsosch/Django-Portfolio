@@ -11,10 +11,14 @@ Service functions should:
 - Call obj.full_clean() before saving
 - Follow naming convention: <entity>_<action> (e.g., portfolio_create)
 """
+import logging
 from decimal import Decimal
 from datetime import date
 from django.db import transaction
-from .models import Asset, Portfolio, Price, PortfolioWeight
+from .models import Asset, Portfolio, Price, PortfolioWeight, PortfolioHolding
+from .selectors import portfolio_weight_list, price_get
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -131,4 +135,129 @@ def portfolio_weight_create(
         weight.full_clean()
         weight.save()
     return weight
+
+
+@transaction.atomic
+def portfolio_holding_create(
+    *,
+    portfolio: Portfolio,
+    asset: Asset,
+    date: date,
+    quantity: Decimal
+) -> PortfolioHolding:
+    """Create a PortfolioHolding instance.
+    
+    Args:
+        portfolio: Related Portfolio instance
+        asset: Related Asset instance
+        date: Holding date
+        quantity: Quantity c_{i,t}
+    
+    Returns:
+        Created or existing PortfolioHolding instance
+    """
+    holding, created = PortfolioHolding.objects.get_or_create(
+        portfolio=portfolio,
+        asset=asset,
+        date=date,
+        defaults={'quantity': quantity}
+    )
+    if not created:
+        holding.quantity = quantity
+        holding.full_clean()
+        holding.save()
+    return holding
+
+
+@transaction.atomic
+def portfolio_initial_quantities_calculate(
+    *,
+    portfolio: Portfolio
+) -> dict[str, PortfolioHolding]:
+    """Calculate and store initial quantities for a portfolio.
+    
+    Uses the formula: C_{i,0} = (w_{i,0} * V₀) / P_{i,0}
+    
+    Where:
+    - w_{i,0} = initial weight of asset i (from PortfolioWeight)
+    - V₀ = initial portfolio value
+    - P_{i,0} = initial price of asset i on initial_date (from Price)
+    - C_{i,0} = initial quantity of asset i
+    
+    Args:
+        portfolio: Portfolio instance to calculate quantities for
+    
+    Returns:
+        Dictionary mapping asset names to PortfolioHolding instances
+    
+    Raises:
+        ValueError: If portfolio missing required data (initial_value, initial_date)
+    """
+    # Validate portfolio has required data
+    if not portfolio.initial_value:
+        raise ValueError(f"Portfolio {portfolio.name} missing initial_value")
+    if not portfolio.initial_date:
+        raise ValueError(f"Portfolio {portfolio.name} missing initial_date")
+    
+    V_0 = portfolio.initial_value
+    initial_date = portfolio.initial_date
+    holdings = {}
+    
+    # Get all weights for the portfolio
+    weights = portfolio_weight_list(portfolio=portfolio)
+    
+    if not weights.exists():
+        logger.warning(f"No weights found for portfolio {portfolio.name}")
+        return holdings
+    
+    # Calculate quantity for each asset
+    for weight in weights:
+        asset = weight.asset
+        w_i_0 = weight.initial_weight
+        
+        # Get initial price for asset on initial_date
+        price_obj = price_get(asset=asset, date=initial_date)
+        
+        if price_obj is None:
+            logger.warning(
+                f"Price not found for asset {asset.name} on {initial_date}, skipping"
+            )
+            continue
+        
+        P_i_0 = price_obj.price
+        
+        # Validate price is positive (avoid division by zero)
+        if P_i_0 <= 0:
+            logger.warning(
+                f"Invalid price {P_i_0} for asset {asset.name} on {initial_date}, skipping"
+            )
+            continue
+        
+        # Calculate quantity: C_{i,0} = (w_{i,0} * V₀) / P_{i,0}
+        try:
+            C_i_0 = (w_i_0 * V_0) / P_i_0
+            
+            # Validate quantity is positive
+            if C_i_0 <= 0:
+                logger.warning(
+                    f"Calculated quantity {C_i_0} for asset {asset.name} is not positive, skipping"
+                )
+                continue
+            
+            # Create PortfolioHolding
+            holding = portfolio_holding_create(
+                portfolio=portfolio,
+                asset=asset,
+                date=initial_date,
+                quantity=C_i_0
+            )
+            holdings[asset.name] = holding
+            
+        except Exception as e:
+            logger.error(
+                f"Error calculating quantity for asset {asset.name}: {str(e)}"
+            )
+            continue
+    
+    return holdings
 
