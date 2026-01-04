@@ -15,8 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+
+# Domain patterns following styleguide structure
+portfolio_patterns = [
+    path('', include(('portfolios.urls', 'portfolios'))),
+]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/portfolios/', include((portfolio_patterns, 'portfolios'))),
 ]
