@@ -1,0 +1,23 @@
+# Django Core
+Django>=4.2,<5.0
+djangorestframework>=3.14.0
+
+# Django Styleguide Requirements
+django-filter>=23.0
+django-environ>=0.11.0
+
+# Data Processing
+openpyxl>=3.1.0  # For reading Excel files (datos.xlsx)
+pandas>=2.0.0    # Alternative/additional for data processing
+
+# Visualization (Bonus 1)
+plotly>=5.17.0   # For interactive charts
+
+# Testing
+pytest>=7.4.0
+pytest-django>=4.7.0
+factory-boy>=3.3.0  # For test factories
+faker>=19.0.0       # For fake data generation
+
+# Development Tools (optional but recommended)
+ruff>=0.1.0  # Code quality tool
