@@ -2,8 +2,8 @@
 
 This document tracks the progress of the Django portfolio investment tracking system development, following the roadmap outlined in `project-roadmap.md`.
 
-**Last Updated:** After Step 2 completion  
-**Overall Progress:** 3 out of 18 steps (16.7% complete)
+**Last Updated:** After Step 3 completion  
+**Overall Progress:** 4 out of 18 steps (22.2% complete)
 
 ---
 
@@ -159,31 +159,84 @@ Django-Portfolio/
 
 ---
 
-## ⏳ Step 3: Set up project structure following Django Styleguide
+## ✅ Step 3: Set up project structure following Django Styleguide
 
-**Status:** ⏳ NOT STARTED
+**Status:** ✅ COMPLETE
 
-**What needs to be done:**
-- Create Django apps (likely a `portfolios` app or similar domain-based app)
-- Set up the standard app structure:
-  - `models.py` - for data models
-  - `services.py` - for business logic (write operations)
-  - `selectors.py` - for data fetching logic
-  - `apis.py` - for APIView classes
-  - `filters.py` - for django-filter FilterSets
-  - `urls.py` - for URL routing
-  - `admin.py` - for Django admin configuration
-  - `tests/` directory with subdirectories for models, services, and selectors
-- Create a BaseModel class with created_at and updated_at fields
-- Set up URL configuration following the styleguide pattern (domain patterns)
-- Configure Django REST Framework settings
-- Set up exception handling structure (if custom exception handler needed)
+**What was done:**
+
+### 1. Created Django App
+- Created `portfolios` Django app using `startapp` command
+- App structure follows styleguide conventions
+
+### 2. Created BaseModel
+- Created `BaseModel` class in `portfolios/models.py`
+- Abstract model with `created_at` (DateTimeField, db_index=True, default=timezone.now)
+- `updated_at` (DateTimeField, auto_now=True)
+- All future models will inherit from BaseModel
+
+### 3. Created App Structure Files
+- `portfolios/services.py` - Business logic for write operations
+- `portfolios/selectors.py` - Data fetching logic
+- `portfolios/apis.py` - APIView classes
+- `portfolios/filters.py` - django-filter FilterSets
+- `portfolios/urls.py` - URL routing with domain patterns
+- `portfolios/admin.py` - Django admin configuration
+
+### 4. Created Test Directory Structure
+- `portfolios/tests/` directory with:
+  - `tests/models/` - for model tests
+  - `tests/services/` - for service tests
+  - `tests/selectors/` - for selector tests
+
+### 5. Configured Django Settings
+- Added `rest_framework` to INSTALLED_APPS
+- Added `django_filters` to INSTALLED_APPS
+- Added `portfolios` to INSTALLED_APPS
+- Configured REST_FRAMEWORK settings:
+  - Default pagination (LimitOffsetPagination)
+  - Authentication and permissions
+  - Custom exception handler
+  - Default renderer/parser classes
+
+### 6. Configured URL Patterns
+- Updated `config/urls.py` with domain pattern structure
+- Included portfolios URLs at `api/portfolios/`
+- Follows styleguide pattern (one URL per API, domain patterns)
+
+### 7. Set Up Exception Handling
+- Created `config/exceptions.py` with custom exception handler
+- Handles Django ValidationError → DRF ValidationError conversion
+- Uses consistent error format `{"detail": ...}`
+
+### 8. Verified Setup
+- Ran `python manage.py check` - passed with no issues
+- All imports work correctly
+- App structure verified
 
 **Why:**
 - Establishes the application structure following Django styleguide
 - Separates concerns (models, services, selectors, APIs)
 - Prepares for domain logic implementation
 - Sets up testing infrastructure
+- Enables REST API development
+- Provides consistent error handling
+
+**Files Created:**
+- `portfolios/` - Django app directory
+  - `portfolios/models.py` - Contains BaseModel
+  - `portfolios/services.py` - Business logic (write operations)
+  - `portfolios/selectors.py` - Data fetching logic
+  - `portfolios/apis.py` - APIView classes
+  - `portfolios/filters.py` - django-filter FilterSets
+  - `portfolios/urls.py` - URL routing
+  - `portfolios/admin.py` - Django admin
+  - `portfolios/tests/` - Test directory structure
+- `config/exceptions.py` - Custom exception handler
+
+**Files Modified:**
+- `config/django/base.py` - Added apps to INSTALLED_APPS, configured DRF
+- `config/urls.py` - Added portfolios URL patterns
 
 ---
 
@@ -238,9 +291,9 @@ Django-Portfolio/
 
 ## Summary
 
-**Completed Steps:** 0, 1, 2 (3 out of 18)  
-**Current Status:** Foundation complete, ready for application development  
-**Next Step:** Step 3 - Set up project structure following Django Styleguide
+**Completed Steps:** 0, 1, 2, 3 (4 out of 18)  
+**Current Status:** App structure complete, ready for data model creation  
+**Next Step:** Step 4 - Design and create data models
 
 **Key Achievements:**
 - ✅ Repository initialized and organized
@@ -249,6 +302,12 @@ Django-Portfolio/
 - ✅ All dependencies installed and configured
 - ✅ Settings organized following best practices
 - ✅ Environment variable management set up
+- ✅ Portfolios app created with complete structure
+- ✅ BaseModel created for all future models
+- ✅ Django REST Framework configured
+- ✅ Exception handling set up
+- ✅ URL patterns configured with domain structure
+- ✅ Test infrastructure ready
 
-**Ready for:** Application logic development, model creation, and business logic implementation.
+**Ready for:** Data model design and creation (Asset, Portfolio, Price, PortfolioWeight, etc.)
 
